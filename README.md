@@ -9,5 +9,7 @@
     - At soft errors I am checking page title contains Page not found
 
 CONCURRENCY_LIMIT: Adjust it to set how many request hits in one instance of concurent window
+
 DO ```npm i```
+
 RUN using ```npm run scan```
