@@ -1,0 +1,11 @@
+{
+  "success": [
+    "url1success"
+  ],
+  "failure": [
+    "url3eorr404"
+  ],
+  "softError": [
+    "url2softError"
+  ]
+}
