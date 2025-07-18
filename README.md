@@ -10,6 +10,14 @@
 
 CONCURRENCY_LIMIT: Adjust it to set how many request hits in one instance of concurent window
 
-DO ```npm i```
+use urls.json to add urls to check see below example
 
-RUN using ```npm run scan```
+```
+[
+    "https://www.url1.demo",
+    "https://www.url2.demo"
+]
+```
+
+Do ```npm i```
+Run using ```npm run scan```
