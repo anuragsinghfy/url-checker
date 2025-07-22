@@ -59,7 +59,7 @@ const checkSinglePage = async (url, attempt = 1) => {
       return await checkSinglePage(url, attempt + 1);
     }
 
-    console.error(`❌ Failed: \${url} - \${err.message}`);
+    console.error(`❌ Failed: ${url} - ${err.message}`);
     return { type: "failure", url };
   }
 };
