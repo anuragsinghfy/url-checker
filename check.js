@@ -41,7 +41,7 @@ const checkSinglePage = async (url, attempt = 1) => {
       html.trim().length > 0
     ) {
       if (isSoft404) {
-        console.warn(`⚠️ Soft 404: ${url} - Title: "\${pageTitle}"`);
+        console.warn(`⚠️ Soft 404: ${url} - Title: "${pageTitle}"`);
         return { type: "softError", url };
       } else {
         console.log(`✅ Success: ${url}`);
@@ -55,7 +55,7 @@ const checkSinglePage = async (url, attempt = 1) => {
     const isTimeout = err.code === "ECONNABORTED" || err.message.includes("timeout");
 
     if (isTimeout && attempt <= MAX_RETRIES) {
-      console.warn(`⏱️ Timeout on \${url}, retrying (\${attempt}/\${MAX_RETRIES})...`);
+      console.warn(`⏱️ Timeout on ${url}, retrying (${attempt}/${MAX_RETRIES})...`);
       return await checkSinglePage(url, attempt + 1);
     }
 
