@@ -10,12 +10,17 @@
 
 CONCURRENCY_LIMIT: Adjust it to set how many request hits in one instance of concurent window
 
-use urls.json to add urls to check see below example
+create urls.txt file and add urls [random text url extraction supported eg:sitemap.xml] to check see below example
 
+```
+https://www.url1.demo updatedat 2272025https://www.url2.demo random text
+```
+
+it will generate urls.json array
 ```
 [
     "https://www.url1.demo",
-    "https://www.url2.demo"
+    "https://www.url2.demo"   
 ]
 ```
 
