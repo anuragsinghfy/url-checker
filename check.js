@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import https from "https";
 import pLimit from "p-limit";
-import urls from "./urls.json" assert { type: "json" };
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
@@ -13,10 +12,20 @@ const __dirname = dirname(__filename);
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 const CONCURRENCY_LIMIT = 20;
 
-const checkSinglePage = async (url) => {
+// STEP 1: Extract URLs from urls.txt
+const rawText = fs.readFileSync(path.resolve(__dirname, "urls.txt"), "utf-8");
+const matches = rawText.match(/https?:\/\/[\w.-]+(?:\.[\w\.-]+)+(?:[\/\w\.-]*)*/g) || [];
+const urls = [...new Set(matches)]; // Deduplicate
+
+fs.writeFileSync(path.resolve(__dirname, "urls.json"), JSON.stringify(urls, null, 2));
+console.log(`✅ Extracted ${urls.length} unique URLs to urls.json`);
+
+const checkSinglePage = async (url, attempt = 1) => {
+  const MAX_RETRIES = 2;
+
   try {
     const res = await axios.get(url, {
-      timeout: 10000,
+      timeout: 30000, // 30s timeout
       httpsAgent,
     });
 
@@ -32,7 +41,7 @@ const checkSinglePage = async (url) => {
       html.trim().length > 0
     ) {
       if (isSoft404) {
-        console.warn(`⚠️ Soft 404: ${url} - Title: "${pageTitle}"`);
+        console.warn(`⚠️ Soft 404: ${url} - Title: "\${pageTitle}"`);
         return { type: "softError", url };
       } else {
         console.log(`✅ Success: ${url}`);
@@ -43,7 +52,14 @@ const checkSinglePage = async (url) => {
       return { type: "failure", url };
     }
   } catch (err) {
-    console.error(`❌ Failed: ${url} - ${err.message}`);
+    const isTimeout = err.code === "ECONNABORTED" || err.message.includes("timeout");
+
+    if (isTimeout && attempt <= MAX_RETRIES) {
+      console.warn(`⏱️ Timeout on \${url}, retrying (\${attempt}/\${MAX_RETRIES})...`);
+      return await checkSinglePage(url, attempt + 1);
+    }
+
+    console.error(`❌ Failed: \${url} - \${err.message}`);
     return { type: "failure", url };
   }
 };
@@ -67,11 +83,10 @@ const checkPages = async (urls) => {
   return { success, failure, softError };
 };
 
-// Run the checker and save results to result.json
+// STEP 2: Check URLs and write result
 (async () => {
   const result = await checkPages(urls);
   const outputPath = path.resolve(__dirname, "result.json");
-
   fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
   console.log(`\n📄 Result written to result.json`);
 })();
