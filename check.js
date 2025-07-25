@@ -14,19 +14,32 @@ const CONCURRENCY_LIMIT = 20;
 
 // STEP 1: Extract URLs from urls.txt
 const rawText = fs.readFileSync(path.resolve(__dirname, "urls.txt"), "utf-8");
-const matches = rawText.match(/https?:\/\/[\w.-]+(?:\.[\w\.-]+)+(?:[\/\w\.-]*)*/g) || [];
-const urls = [...new Set(matches)]; // Deduplicate
+const matches = rawText.match(/https?:\/\/[^\s"'>]+/g) || [];
+const urls = [...new Set(matches.map((url) => url.trim()))]; // dedupe + clean
 
-fs.writeFileSync(path.resolve(__dirname, "urls.json"), JSON.stringify(urls, null, 2));
+fs.writeFileSync(
+  path.resolve(__dirname, "urls.json"),
+  JSON.stringify(urls, null, 2)
+);
 console.log(`✅ Extracted ${urls.length} unique URLs to urls.json`);
 
 const checkSinglePage = async (url, attempt = 1) => {
-  const MAX_RETRIES = 2;
+  const MAX_RETRIES = 3;
 
   try {
     const res = await axios.get(url, {
-      timeout: 30000, // 30s timeout
+      timeout: 30000,
       httpsAgent,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+          "AppleWebKit/537.36 (KHTML, like Gecko) " +
+          "Chrome/115.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        Connection: "keep-alive",
+      },
     });
 
     const html = res.data;
@@ -52,10 +65,13 @@ const checkSinglePage = async (url, attempt = 1) => {
       return { type: "failure", url };
     }
   } catch (err) {
-    const isTimeout = err.code === "ECONNABORTED" || err.message.includes("timeout");
+    const isTimeout =
+      err.code === "ECONNABORTED" || err.message.includes("timeout");
 
     if (isTimeout && attempt <= MAX_RETRIES) {
-      console.warn(`⏱️ Timeout on ${url}, retrying (${attempt}/${MAX_RETRIES})...`);
+      console.warn(
+        `⏱️ Timeout on ${url}, retrying (${attempt}/${MAX_RETRIES})...`
+      );
       return await checkSinglePage(url, attempt + 1);
     }
 
